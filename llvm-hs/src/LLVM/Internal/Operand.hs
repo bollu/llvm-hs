@@ -23,6 +23,7 @@ import LLVM.Internal.Context
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.InlineAssembly ()
+import LLVM.Internal.Intrinsic
 import LLVM.Internal.Metadata ()
 
 import qualified LLVM.AST as A
@@ -58,8 +59,12 @@ instance DecodeM DecodeAST A.CallableOperand (Ptr FFI.Value) where
   decodeM v = do
     ia <- liftIO $ FFI.isAInlineAsm v
     if ia /= nullPtr
-     then liftM Left (decodeM ia)
-     else liftM Right (decodeM v)
+     then liftM A.CallableInlineAssembly (decodeM ia)
+     else do
+            iint <- liftIO $ FFI.isAIntrinsicInst v
+            if iint /= nullPtr
+              then liftM A.CallableIntrinsic (decodeM iint)
+              else liftM A.CallableFunction (decodeM v)
 
 instance EncodeM EncodeAST A.Operand (Ptr FFI.Value) where
   encodeM (A.ConstantOperand c) = (FFI.upCast :: Ptr FFI.Constant -> Ptr FFI.Value) <$> encodeM c
@@ -89,8 +94,9 @@ instance EncodeM EncodeAST A.Metadata (Ptr FFI.Metadata) where
      liftIO $ FFI.upCast <$> FFI.mdValue v
 
 instance EncodeM EncodeAST A.CallableOperand (Ptr FFI.Value) where
-  encodeM (Right o) = encodeM o
-  encodeM (Left i) = liftM (FFI.upCast :: Ptr FFI.InlineAsm -> Ptr FFI.Value) (encodeM i)
+  encodeM (A.CallableFunction o) = encodeM o
+  encodeM (A.CallableInlineAssembly i) = liftM (FFI.upCast :: Ptr FFI.InlineAsm -> Ptr FFI.Value) (encodeM i)
+  encodeM (A.CallableIntrinsic in_) = encodeM in_
 
 instance EncodeM EncodeAST A.MetadataNode (Ptr FFI.MDNode) where
   encodeM (A.MetadataNode ops) = scopeAnyCont $ do

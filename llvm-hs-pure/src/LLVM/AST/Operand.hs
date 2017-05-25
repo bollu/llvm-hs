@@ -7,6 +7,7 @@ import LLVM.AST.Name
 import LLVM.AST.Constant
 import LLVM.AST.InlineAssembly
 import LLVM.AST.Type
+import LLVM.AST.Intrinsic
 
 -- | A 'MetadataNodeID' is a number for identifying a metadata node.
 -- Note this is different from "named metadata", which are represented with
@@ -37,4 +38,4 @@ data Operand
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | The 'LLVM.AST.Instruction.Call' instruction is special: the callee can be inline assembly
-type CallableOperand  = Either InlineAssembly Operand
+data CallableOperand = CallableFunction Operand | CallableInlineAssembly InlineAssembly | CallableIntrinsic Intrinsic deriving (Eq, Read, Show, Typeable, Data, Generic)

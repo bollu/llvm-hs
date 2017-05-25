@@ -15,6 +15,12 @@ import LLVM.Internal.FFI.PtrHierarchy
 foreign import ccall unsafe "LLVMIsAInlineAsm" isAInlineAsm ::
   Ptr Value -> IO (Ptr InlineAsm)
 
+
+foreign import ccall unsafe "LLVMIsAIntrinsicInst" isAIntrinsicInst ::
+  Ptr Value -> IO (Ptr Value)
+
+
+
 foreign import ccall unsafe "LLVM_Hs_CreateInlineAsm" createInlineAsm ::
   Ptr Type -> CString -> CString -> LLVMBool -> LLVMBool -> AsmDialect -> IO (Ptr InlineAsm)
 
